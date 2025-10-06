@@ -14,7 +14,7 @@ fun ToDoScreen() {
     val context = LocalContext.current
     val taskStorage = remember { TaskStorage(context) }
 
-    var tasks by remember { mutableStateOf(taskStorage.loadTasks().toMutableList()) }
+    var tasks by remember { mutableStateOf(taskStorage.loadTasks()) }
     var newTask by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.padding(16.dp)) {
@@ -27,13 +27,14 @@ fun ToDoScreen() {
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = {
             if (newTask.isNotBlank()) {
-                tasks.add(newTask.trim())
+                tasks = tasks + newTask.trim()  // actualizar estado con nueva lista
                 taskStorage.saveTasks(tasks)
                 newTask = ""
             }
         }, modifier = Modifier.fillMaxWidth()) {
             Text("Agregar")
         }
+
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {
             items(tasks.size) { index ->
