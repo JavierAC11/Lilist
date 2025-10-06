@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Lilist</string>
+    <string name="new_task">Nueva tarea</string>
+    <string name="add_task">Agregar</string>
 </resources>
