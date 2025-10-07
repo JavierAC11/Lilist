@@ -17,8 +17,13 @@ import androidx.compose.ui.unit.dp
 fun ToDoScreen() {
     val context = LocalContext.current
     val taskStorage = remember { TaskStorage(context) }
+
+    // Carga sin ordenar
     var tasks by remember { mutableStateOf(taskStorage.loadTasks()) }
     var newTask by remember { mutableStateOf("") }
+
+    // Ordena tareas para la UI, sin modificar la persistencia original
+    val orderedTasks = remember(tasks) { tasks.sortedWith(compareBy({ it.isDone }, { it.id })) }
 
     Column(modifier = Modifier.padding(16.dp)) {
         OutlinedTextField(
@@ -27,7 +32,7 @@ fun ToDoScreen() {
             label = { Text("Nueva tarea") },
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(Modifier.height(8.dp))
         Button(onClick = {
             if (newTask.isNotBlank()) {
                 tasks = tasks + Task(text = newTask.trim())
@@ -37,40 +42,35 @@ fun ToDoScreen() {
         }, modifier = Modifier.fillMaxWidth()) {
             Text("Agregar")
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
         LazyColumn {
-            items(tasks.size) { index ->
+            items(orderedTasks.size) { index ->
+                val task = orderedTasks[index]
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Checkbox(
-                        checked = tasks[index].isDone,
+                        checked = task.isDone,
                         onCheckedChange = { checked ->
-                            val id = tasks[index].id
-                            tasks = tasks.map { task ->
-                                if (task.id == id) task.copy(isDone = checked) else task
-                            }
+                            tasks = tasks.map { if (it.id == task.id) it.copy(isDone = checked) else it }
                             taskStorage.saveTasks(tasks)
                         }
                     )
-
                     Text(
-                        text = tasks[index].text,
-                        style = if (tasks[index].isDone) MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough)
+                        text = task.text,
+                        style = if (task.isDone) MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough)
                         else MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = {
-                        tasks = tasks.filter { it.id != tasks[index].id }
+                        tasks = tasks.filter { it.id != task.id }
                         taskStorage.saveTasks(tasks)
                     }) {
                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                     }
-
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(Modifier.height(4.dp))
             }
         }
     }
