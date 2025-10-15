@@ -8,44 +8,43 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ToDoScreen() {
-    val context = LocalContext.current
-    val taskStorage = remember { TaskStorage(context) }
+fun ToDoScreen(
+    tasks: List<Task>,
+    onAddTask: (Task) -> Unit,
+    onUpdateTask: (Task) -> Unit,
+    onDeleteTask: (Task) -> Unit
+) {
+    var newTaskText by remember { mutableStateOf("") }
 
-    // Carga sin ordenar
-    var tasks by remember { mutableStateOf(taskStorage.loadTasks()) }
-    var newTask by remember { mutableStateOf("") }
-
-    // Ordena tareas para la UI, sin modificar la persistencia original
-    val orderedTasks = remember(tasks) { tasks.sortedWith(compareBy({ it.isDone }, { it.id })) }
-
+    val tasksSinFecha = remember(tasks) { tasks.filter { it.date == null } }
     Column(modifier = Modifier.padding(16.dp)) {
         OutlinedTextField(
-            value = newTask,
-            onValueChange = { newTask = it },
+            value = newTaskText,
+            onValueChange = { newTaskText = it },
             label = { Text("Nueva tarea") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
-        Button(onClick = {
-            if (newTask.isNotBlank()) {
-                tasks = tasks + Task(text = newTask.trim())
-                taskStorage.saveTasks(tasks)
-                newTask = ""
-            }
-        }, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = {
+                if (newTaskText.isNotBlank()) {
+                    onAddTask(Task(text = newTaskText.trim()))
+                    newTaskText = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Agregar")
         }
         Spacer(Modifier.height(16.dp))
         LazyColumn {
-            items(orderedTasks.size) { index ->
-                val task = orderedTasks[index]
+            items(tasksSinFecha.size) { index ->
+                val task = tasksSinFecha[index]
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -53,8 +52,7 @@ fun ToDoScreen() {
                     Checkbox(
                         checked = task.isDone,
                         onCheckedChange = { checked ->
-                            tasks = tasks.map { if (it.id == task.id) it.copy(isDone = checked) else it }
-                            taskStorage.saveTasks(tasks)
+                            onUpdateTask(task.copy(isDone = checked))
                         }
                     )
                     Text(
@@ -63,10 +61,7 @@ fun ToDoScreen() {
                         else MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(onClick = {
-                        tasks = tasks.filter { it.id != task.id }
-                        taskStorage.saveTasks(tasks)
-                    }) {
+                    IconButton(onClick = { onDeleteTask(task) }) {
                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                     }
                 }

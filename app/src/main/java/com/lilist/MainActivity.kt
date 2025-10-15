@@ -15,15 +15,32 @@ import java.time.LocalDate
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val taskStorage = TaskStorage(this)
         setContent {
-            MainScreen()
+            MainScreen(taskStorage)
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(taskStorage: TaskStorage) {
     var selectedScreen by remember { mutableStateOf("todo") }
+    var tasks by remember { mutableStateOf(taskStorage.loadTasks()) }
+
+    fun agregarTarea(tarea: Task) {
+        tasks = tasks + tarea
+        taskStorage.saveTasks(tasks)
+    }
+
+    fun actualizarTarea(tarea: Task) {
+        tasks = tasks.map { if (it.id == tarea.id) tarea else it }
+        taskStorage.saveTasks(tasks)
+    }
+
+    fun eliminarTarea(tarea: Task) {
+        tasks = tasks.filter { it.id != tarea.id }
+        taskStorage.saveTasks(tasks)
+    }
 
     Scaffold(
         bottomBar = {
@@ -45,21 +62,38 @@ fun MainScreen() {
     ) { innerPadding ->
         Surface(modifier = Modifier.padding(innerPadding)) {
             when (selectedScreen) {
-                "todo" -> ToDoScreen() // Tu pantalla de tareas
-                "calendar" -> CalendarScreenWrapper() // Adaptar calendar screen para usar sin parámetros
+                "todo" -> ToDoScreen(
+                    tasks = tasks,
+                    onAddTask = ::agregarTarea,
+                    onUpdateTask = ::actualizarTarea,
+                    onDeleteTask = ::eliminarTarea
+                )
+                "calendar" -> CalendarScreenWrapper(
+                    tasks = tasks,
+                    onAddTask = ::agregarTarea,
+                    onUpdateTask = ::actualizarTarea,
+                    onDeleteTask = ::eliminarTarea
+                )
             }
         }
     }
 }
 
 @Composable
-fun CalendarScreenWrapper() {
+fun CalendarScreenWrapper(
+    tasks: List<Task>,
+    onAddTask: (Task) -> Unit,
+    onUpdateTask: (Task) -> Unit,
+    onDeleteTask: (Task) -> Unit
+) {
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    val events = remember { mapOf<LocalDate, List<String>>() } // Carga o pasa tus eventos aquí
 
     CalendarScreen(
         selectedDate = selectedDate,
         onDateSelected = { selectedDate = it },
-        events = events
+        tasks = tasks,
+        onAddTask = { fecha, texto -> onAddTask(Task(text = texto, date = fecha)) },
+        onUpdateTask = onUpdateTask,
+        onDeleteTask = onDeleteTask
     )
 }
