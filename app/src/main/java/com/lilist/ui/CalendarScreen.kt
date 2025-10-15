@@ -1,4 +1,4 @@
-package com.lilist
+package com.lilist.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
+import com.lilist.data.Task
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth

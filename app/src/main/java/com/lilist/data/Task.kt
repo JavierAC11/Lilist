@@ -1,4 +1,4 @@
-package com.lilist
+package com.lilist.data
 
 import java.time.LocalDate
 

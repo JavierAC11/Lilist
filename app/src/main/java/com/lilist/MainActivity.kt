@@ -7,25 +7,36 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.lilist.data.Challenge
+import com.lilist.data.ChallengeStorage
+import com.lilist.data.Task
+import com.lilist.data.TaskStorage
+import com.lilist.ui.CalendarScreen
+import com.lilist.ui.ChallengeScreen
+import com.lilist.ui.ToDoScreen
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val taskStorage = TaskStorage(this)
+        val challengeStorage = ChallengeStorage(this)
         setContent {
-            MainScreen(taskStorage)
+            MainScreen(taskStorage, challengeStorage)
         }
     }
 }
 
 @Composable
-fun MainScreen(taskStorage: TaskStorage) {
+fun MainScreen(taskStorage: TaskStorage, challengeStorage: ChallengeStorage) {
     var selectedScreen by remember { mutableStateOf("todo") }
+
     var tasks by remember { mutableStateOf(taskStorage.loadTasks()) }
+    var challenges by remember { mutableStateOf(challengeStorage.loadChallenges()) }
 
     fun agregarTarea(tarea: Task) {
         tasks = tasks + tarea
@@ -40,6 +51,16 @@ fun MainScreen(taskStorage: TaskStorage) {
     fun eliminarTarea(tarea: Task) {
         tasks = tasks.filter { it.id != tarea.id }
         taskStorage.saveTasks(tasks)
+    }
+
+    fun agregarReto(reto: Challenge) {
+        challenges = challenges + reto
+        challengeStorage.saveChallenges(challenges)
+    }
+
+    fun eliminarReto(reto: Challenge) {
+        challenges = challenges.filter { it.id != reto.id }
+        challengeStorage.saveChallenges(challenges)
     }
 
     Scaffold(
@@ -57,6 +78,12 @@ fun MainScreen(taskStorage: TaskStorage) {
                     selected = selectedScreen == "calendar",
                     onClick = { selectedScreen = "calendar" }
                 )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Filled.Star, contentDescription = "Retos") },
+                    label = { Text("Retos") },
+                    selected = selectedScreen == "challenges",
+                    onClick = { selectedScreen = "challenges" }
+                )
             }
         }
     ) { innerPadding ->
@@ -73,6 +100,11 @@ fun MainScreen(taskStorage: TaskStorage) {
                     onAddTask = ::agregarTarea,
                     onUpdateTask = ::actualizarTarea,
                     onDeleteTask = ::eliminarTarea
+                )
+                "challenges" -> ChallengeScreen(
+                    challenges = challenges,
+                    onAddChallenge = ::agregarReto,
+                    onDeleteChallenge = ::eliminarReto
                 )
             }
         }
