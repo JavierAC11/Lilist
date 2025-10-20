@@ -63,6 +63,12 @@ fun MainScreen(taskStorage: TaskStorage, challengeStorage: ChallengeStorage) {
         challengeStorage.saveChallenges(challenges)
     }
 
+    fun actualizarReto(nuevoReto: Challenge) {
+        challenges = challenges.map { if (it.id == nuevoReto.id) nuevoReto else it }
+        challengeStorage.saveChallenges(challenges)
+    }
+
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -104,7 +110,8 @@ fun MainScreen(taskStorage: TaskStorage, challengeStorage: ChallengeStorage) {
                 "challenges" -> ChallengeScreen(
                     challenges = challenges,
                     onAddChallenge = ::agregarReto,
-                    onDeleteChallenge = ::eliminarReto
+                    onDeleteChallenge = ::eliminarReto,
+                    onUpdateChallenge = ::actualizarReto
                 )
             }
         }

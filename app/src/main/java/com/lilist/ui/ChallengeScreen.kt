@@ -16,6 +16,7 @@ import com.lilist.data.Challenge
 fun ChallengeScreen(
     challenges: List<Challenge>,
     onAddChallenge: (Challenge) -> Unit,
+    onUpdateChallenge: (Challenge) -> Unit,
     onDeleteChallenge: (Challenge) -> Unit
 ) {
     var newName by remember { mutableStateOf("") }
@@ -64,7 +65,8 @@ fun ChallengeScreen(
                             name = newName.trim(),
                             description = newDescription.trim(),
                             startValue = startVal,
-                            targetValue = targetVal
+                            targetValue = targetVal,
+                            progress = startVal
                         )
                     )
                     newName = ""
@@ -78,26 +80,69 @@ fun ChallengeScreen(
             Text("Añadir reto")
         }
         Spacer(Modifier.height(16.dp))
-
         Text("Retos existentes", style = MaterialTheme.typography.titleMedium)
         LazyColumn {
             items(challenges.size) { index ->
                 val challenge = challenges[index]
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(challenge.name, style = MaterialTheme.typography.titleSmall)
-                        Text(challenge.description, style = MaterialTheme.typography.bodySmall)
-                        Text("De ${challenge.startValue} a ${challenge.targetValue}")
+                ChallengeItem(
+                    challenge = challenge,
+                    onUpdateChallenge = onUpdateChallenge,
+                    onDeleteChallenge = onDeleteChallenge
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun ChallengeItem(
+    challenge: Challenge,
+    onUpdateChallenge: (Challenge) -> Unit,
+    onDeleteChallenge: (Challenge) -> Unit
+) {
+    var progressText by remember { mutableStateOf(challenge.progress.toString()) }
+    val denominator = challenge.targetValue - challenge.startValue
+    val fraction = if (denominator != 0f)
+        ((challenge.progress - challenge.startValue) / denominator).coerceIn(0f, 1f)
+    else 0f
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Text(challenge.name, style = MaterialTheme.typography.titleSmall)
+            Text(challenge.description, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = fraction,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(2.dp))
+            Text("Progreso: ${challenge.progress} / ${challenge.targetValue}")
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = progressText,
+                    onValueChange = { progressText = it },
+                    label = { Text("Actualizar avance") },
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = {
+                    val value = progressText.toFloatOrNull()
+                    if (value != null) {
+                        val newProgress = value.coerceIn(challenge.startValue, challenge.targetValue)
+                        onUpdateChallenge(challenge.copy(progress = newProgress))
+                        progressText = newProgress.toString()
                     }
-                    IconButton(onClick = { onDeleteChallenge(challenge) }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar reto")
-                    }
+                }) {
+                    Text("Actualizar")
+                }
+                IconButton(onClick = { onDeleteChallenge(challenge) }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar reto")
                 }
             }
         }

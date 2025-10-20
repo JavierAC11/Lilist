@@ -7,5 +7,6 @@ data class Challenge(
     val name: String,
     val description: String,
     val startValue: Float,
-    val targetValue: Float
+    val targetValue: Float,
+    val progress: Float = 0f   // Valor actual del avance
 )
